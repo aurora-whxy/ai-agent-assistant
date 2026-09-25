@@ -1,0 +1,10 @@
+streamlit==1.64.0
+langchain-openai
+langgraph
+langchain-text-splitters
+langchain-chroma
+langchain-huggingface
+sentence-transformers
+chromadb
+openai
+requests
