@@ -20,7 +20,7 @@ from langchain_core.tools import tool
 
 # ===== 页面配置 =====
 st.set_page_config(
-    page_title="智能知识库 Agent",
+    page_title="智能客服助手",
     page_icon="🤖",
     layout="centered",
     initial_sidebar_state="auto"
@@ -94,8 +94,9 @@ def get_api_key():
 @tool
 def get_current_time() -> str:
     """获取当前的日期和时间，当用户问"现在几点了"、"今天几号"时使用。"""
+    # 东八区时间（北京时间）
     bj_tz = timezone(timedelta(hours=8))
-now = datetime.now(bj_tz)
+    now = datetime.now(bj_tz)
     weekdays = ["一", "二", "三", "四", "五", "六", "日"]
     return f"现在是 {now.strftime('%Y年%m月%d日 %H:%M')}，星期{weekdays[now.weekday()]}"
 
