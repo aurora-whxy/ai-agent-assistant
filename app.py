@@ -20,7 +20,7 @@ from langchain_core.tools import tool
 
 # ===== 页面配置 =====
 st.set_page_config(
-    page_title="智能客服助手",
+    page_title="智能知识库 Agent",
     page_icon="🤖",
     layout="centered",
     initial_sidebar_state="auto"
@@ -67,7 +67,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===== 标题 =====
-st.markdown('<h1 class="main-title">🤖 智能客服助手</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-title">🤖 智能客服助手 <small style="font-size:1rem;color:#999">v2.0 北京时间修复版</small></h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">会查资料 · 会写代码 · 会查天气 · 会记事</p>', unsafe_allow_html=True)
 
 # 功能标签
