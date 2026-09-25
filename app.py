@@ -8,7 +8,7 @@ os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
 os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
 
 import streamlit as st
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import requests
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
@@ -94,7 +94,8 @@ def get_api_key():
 @tool
 def get_current_time() -> str:
     """获取当前的日期和时间，当用户问"现在几点了"、"今天几号"时使用。"""
-    now = datetime.now()
+    bj_tz = timezone(timedelta(hours=8))
+now = datetime.now(bj_tz)
     weekdays = ["一", "二", "三", "四", "五", "六", "日"]
     return f"现在是 {now.strftime('%Y年%m月%d日 %H:%M')}，星期{weekdays[now.weekday()]}"
 
