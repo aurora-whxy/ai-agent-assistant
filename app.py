@@ -214,7 +214,26 @@ def load_agent():
 
     # 创建 Agent
     tools = [search_knowledge, get_current_time, get_weather, calculator, generate_image, search_web]
-    agent = create_react_agent(llm, tools=tools)
+    
+    # 系统提示：强制 AI 正确使用工具
+    system_prompt = """你是一个智能助手，必须严格按照规则使用工具：
+
+【必须调用工具的情况】
+1. 用户要求生成图片、画一张图 → 必须调用 generate_image 工具，绝对不要自己用文字描述图片
+2. 用户问现在几点了、今天几号 → 必须调用 get_current_time 工具
+3. 用户问天气 → 必须调用 get_weather 工具
+4. 用户问数学题 → 必须调用 calculator 工具
+5. 用户问产品相关问题 → 必须调用 search_knowledge 工具
+6. 用户需要搜索最新信息 → 必须调用 search_web 工具
+
+【禁止行为】
+- 绝对不要自己编造图片内容，必须调用 generate_image 工具生成真实图片
+- 绝对不要自己编造时间，必须调用 get_current_time 工具
+- 绝对不要自己编造天气，必须调用 get_weather 工具
+
+只有不涉及上述工具的问题（比如写代码、聊天、解释概念），才可以直接回答。"""
+    
+    agent = create_react_agent(llm, tools=tools, messages_modifier=system_prompt)
 
     return agent
 
