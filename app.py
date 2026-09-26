@@ -142,9 +142,12 @@ def generate_image(prompt: str) -> str:
     """【必须调用】当用户要求"生成图片"、"画一张"、"画个图"、"做张图"、"帮我画"时，必须调用此工具来生成真实图片。绝对不要自己用文字描述图片内容，必须调用工具生成真实的图片URL。输入参数是图片的详细描述，比如"一只可爱的橘猫在阳台上晒太阳，卡通风格，明亮温暖"。"""
     try:
         import urllib.parse
-        encoded_prompt = urllib.parse.quote(prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
-        return f"✅ 图片生成成功！\n\n![生成的图片]({image_url})\n\n图片描述：{prompt}\n\n你可以直接在上面看到这张图片。"
+        # 加一些质量关键词，提升生成效果
+        enhanced_prompt = f"{prompt}, high quality, detailed, 4k"
+        encoded_prompt = urllib.parse.quote(enhanced_prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed=random"
+        # 用特殊标记包裹图片URL，方便后面解析显示
+        return f"✅ 图片生成成功！\n\n[IMAGE_URL]{image_url}[/IMAGE_URL]\n\n图片描述：{prompt}"
     except Exception as e:
         return f"生成图片失败：{str(e)}"
 
@@ -224,10 +227,30 @@ if "messages" not in st.session_state:
         {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 🎨 根据描述生成图片\n- 🔍 搜索网页获取最新信息\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
     ]
 
+# ===== 显示消息的辅助函数 =====
+def display_message(content):
+    """显示消息内容，如果有图片URL标记，就直接显示图片"""
+    import re
+    # 检测有没有图片URL标记
+    pattern = r'\[IMAGE_URL\](.*?)\[/IMAGE_URL\]'
+    matches = re.findall(pattern, content, re.DOTALL)
+    
+    if matches:
+        # 把图片标记替换掉，剩下的文本正常显示
+        text = re.sub(pattern, '', content).strip()
+        if text:
+            st.markdown(text)
+        # 显示图片
+        for url in matches:
+            st.image(url, use_column_width=True)
+    else:
+        # 没有图片，正常显示文本
+        st.markdown(content)
+
 # ===== 显示历史消息 =====
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        display_message(message["content"])
 
 # ===== 用户输入 =====
 if prompt := st.chat_input("💬 输入你的问题..."):
@@ -242,7 +265,7 @@ if prompt := st.chat_input("💬 输入你的问题..."):
             # 用 Agent 处理（传入完整对话历史，让它有记忆）
             result = agent.invoke({"messages": st.session_state.messages})
             answer = result["messages"][-1].content
-            st.markdown(answer)
+            display_message(answer)
 
     # 保存到历史
     st.session_state.messages.append({"role": "assistant", "content": answer})
