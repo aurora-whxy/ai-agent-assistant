@@ -214,9 +214,17 @@ def load_agent():
 
     # 创建 Agent
     tools = [search_knowledge, get_current_time, get_weather, calculator, generate_image, search_web]
-    
-    # 系统提示：强制 AI 正确使用工具
-    system_prompt = """你是一个智能助手，必须严格按照规则使用工具：
+    agent = create_react_agent(llm, tools=tools)
+
+    return agent
+
+# ===== 加载 Agent =====
+agent = load_agent()
+
+# ===== 初始化聊天历史 =====
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": """你是一个智能助手，必须严格按照规则使用工具：
 
 【必须调用工具的情况】
 1. 用户要求生成图片、画一张图 → 必须调用 generate_image 工具，绝对不要自己用文字描述图片
@@ -231,18 +239,7 @@ def load_agent():
 - 绝对不要自己编造时间，必须调用 get_current_time 工具
 - 绝对不要自己编造天气，必须调用 get_weather 工具
 
-只有不涉及上述工具的问题（比如写代码、聊天、解释概念），才可以直接回答。"""
-    
-    agent = create_react_agent(llm, tools=tools, messages_modifier=system_prompt)
-
-    return agent
-
-# ===== 加载 Agent =====
-agent = load_agent()
-
-# ===== 初始化聊天历史 =====
-if "messages" not in st.session_state:
-    st.session_state.messages = [
+只有不涉及上述工具的问题（比如写代码、聊天、解释概念），才可以直接回答。"""},
         {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 🎨 根据描述生成图片\n- 🔍 搜索网页获取最新信息\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
     ]
 
