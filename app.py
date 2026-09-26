@@ -77,7 +77,6 @@ st.markdown("""
     <span class="tag">🌤️ 实时天气</span>
     <span class="tag">⏰ 时间查询</span>
     <span class="tag">🧮 计算器</span>
-    <span class="tag">🎨 图片生成</span>
     <span class="tag">🔍 网页搜索</span>
     <span class="tag">💬 多轮对话</span>
 </div>
@@ -138,20 +137,6 @@ def calculator(expression: str) -> str:
         return f"计算错误：{str(e)}"
 
 @tool
-def generate_image(prompt: str) -> str:
-    """【必须调用】当用户要求"生成图片"、"画一张"、"画个图"、"做张图"、"帮我画"时，必须调用此工具来生成真实图片。绝对不要自己用文字描述图片内容，必须调用工具生成真实的图片URL。输入参数是图片的详细描述，比如"一只可爱的橘猫在阳台上晒太阳，卡通风格，明亮温暖"。"""
-    try:
-        import urllib.parse
-        # 加一些质量关键词，提升生成效果
-        enhanced_prompt = f"{prompt}, high quality, detailed, 4k"
-        encoded_prompt = urllib.parse.quote(enhanced_prompt)
-        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true&seed=random"
-        # 用特殊标记包裹图片URL，方便后面解析显示
-        return f"✅ 图片生成成功！\n\n[IMAGE_URL]{image_url}[/IMAGE_URL]\n\n图片描述：{prompt}"
-    except Exception as e:
-        return f"生成图片失败：{str(e)}"
-
-@tool
 def search_web(query: str) -> str:
     """搜索互联网获取最新信息，当用户问"最新新闻"、"最近发生了什么"、"查一下某个东西"等需要实时网络信息时使用。"""
     try:
@@ -184,8 +169,9 @@ def load_agent():
         documents.append(doc)
 
     # embedding + 向量库（持久化）
-    embedding = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-    persist_dir = "./chroma_db"
+    # 用更小更快的模型，加载速度快一倍
+    embedding = HuggingFaceEmbeddings(model_name="paraphrase-MiniLM-L3-v2")
+    persist_dir = "./chroma_db_fast"
     if os.path.exists(persist_dir) and len(os.listdir(persist_dir)) > 0:
         db = Chroma(persist_directory=persist_dir, embedding_function=embedding)
     else:
@@ -213,7 +199,7 @@ def load_agent():
     )
 
     # 创建 Agent
-    tools = [search_knowledge, get_current_time, get_weather, calculator, generate_image, search_web]
+    tools = [search_knowledge, get_current_time, get_weather, calculator, search_web]
     agent = create_react_agent(llm, tools=tools)
 
     return agent
@@ -227,20 +213,18 @@ if "messages" not in st.session_state:
         {"role": "system", "content": """你是一个智能助手，必须严格按照规则使用工具：
 
 【必须调用工具的情况】
-1. 用户要求生成图片、画一张图 → 必须调用 generate_image 工具，绝对不要自己用文字描述图片
-2. 用户问现在几点了、今天几号 → 必须调用 get_current_time 工具
-3. 用户问天气 → 必须调用 get_weather 工具
-4. 用户问数学题 → 必须调用 calculator 工具
-5. 用户问产品相关问题 → 必须调用 search_knowledge 工具
-6. 用户需要搜索最新信息 → 必须调用 search_web 工具
+1. 用户问现在几点了、今天几号 → 必须调用 get_current_time 工具
+2. 用户问天气 → 必须调用 get_weather 工具
+3. 用户问数学题 → 必须调用 calculator 工具
+4. 用户问产品相关问题 → 必须调用 search_knowledge 工具
+5. 用户需要搜索最新信息 → 必须调用 search_web 工具
 
 【禁止行为】
-- 绝对不要自己编造图片内容，必须调用 generate_image 工具生成真实图片
 - 绝对不要自己编造时间，必须调用 get_current_time 工具
 - 绝对不要自己编造天气，必须调用 get_weather 工具
 
 只有不涉及上述工具的问题（比如写代码、聊天、解释概念），才可以直接回答。"""},
-        {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 🎨 根据描述生成图片\n- 🔍 搜索网页获取最新信息\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
+        {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 🔍 搜索网页获取最新信息\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
     ]
 
 # ===== 显示消息的辅助函数 =====
@@ -265,6 +249,9 @@ def display_message(content):
 
 # ===== 显示历史消息 =====
 for message in st.session_state.messages:
+    # 不显示 system 角色的消息
+    if message["role"] == "system":
+        continue
     with st.chat_message(message["role"]):
         display_message(message["content"])
 
