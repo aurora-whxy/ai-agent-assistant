@@ -139,12 +139,12 @@ def calculator(expression: str) -> str:
 
 @tool
 def generate_image(prompt: str) -> str:
-    """根据文字描述生成图片，当用户说"画一张"、"生成图片"、"画个图"时使用。输入是图片的描述，比如"一只可爱的猫咪在晒太阳"。"""
+    """【必须调用】当用户要求"生成图片"、"画一张"、"画个图"、"做张图"、"帮我画"时，必须调用此工具来生成真实图片。绝对不要自己用文字描述图片内容，必须调用工具生成真实的图片URL。输入参数是图片的详细描述，比如"一只可爱的橘猫在阳台上晒太阳，卡通风格，明亮温暖"。"""
     try:
         import urllib.parse
         encoded_prompt = urllib.parse.quote(prompt)
         image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
-        return f"图片已生成！你可以点击查看：{image_url}\n\n图片描述：{prompt}"
+        return f"✅ 图片生成成功！\n\n![生成的图片]({image_url})\n\n图片描述：{prompt}\n\n你可以直接在上面看到这张图片。"
     except Exception as e:
         return f"生成图片失败：{str(e)}"
 
