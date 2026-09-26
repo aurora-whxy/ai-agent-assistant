@@ -77,6 +77,8 @@ st.markdown("""
     <span class="tag">🌤️ 实时天气</span>
     <span class="tag">⏰ 时间查询</span>
     <span class="tag">🧮 计算器</span>
+    <span class="tag">🎨 图片生成</span>
+    <span class="tag">🔍 网页搜索</span>
     <span class="tag">💬 多轮对话</span>
 </div>
 """, unsafe_allow_html=True)
@@ -135,6 +137,30 @@ def calculator(expression: str) -> str:
     except Exception as e:
         return f"计算错误：{str(e)}"
 
+@tool
+def generate_image(prompt: str) -> str:
+    """根据文字描述生成图片，当用户说"画一张"、"生成图片"、"画个图"时使用。输入是图片的描述，比如"一只可爱的猫咪在晒太阳"。"""
+    try:
+        import urllib.parse
+        encoded_prompt = urllib.parse.quote(prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
+        return f"图片已生成！你可以点击查看：{image_url}\n\n图片描述：{prompt}"
+    except Exception as e:
+        return f"生成图片失败：{str(e)}"
+
+@tool
+def search_web(query: str) -> str:
+    """搜索互联网获取最新信息，当用户问"最新新闻"、"最近发生了什么"、"查一下某个东西"等需要实时网络信息时使用。"""
+    try:
+        from duckduckgo_search import DDGS
+        results = []
+        with DDGS() as ddgs:
+            for r in ddgs.text(query, max_results=3):
+                results.append(f"标题：{r['title']}\n内容：{r['body']}\n链接：{r['href']}")
+        return "搜索结果：\n\n" + "\n\n---\n\n".join(results)
+    except Exception as e:
+        return f"搜索失败：{str(e)}"
+
 # ===== 缓存：加载知识库和 Agent =====
 @st.cache_resource(show_spinner="⏳ 正在初始化智能 Agent，请稍候...")
 def load_agent():
@@ -184,7 +210,7 @@ def load_agent():
     )
 
     # 创建 Agent
-    tools = [search_knowledge, get_current_time, get_weather, calculator]
+    tools = [search_knowledge, get_current_time, get_weather, calculator, generate_image, search_web]
     agent = create_react_agent(llm, tools=tools)
 
     return agent
@@ -195,7 +221,7 @@ agent = load_agent()
 # ===== 初始化聊天历史 =====
 if "messages" not in st.session_state:
     st.session_state.messages = [
-        {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
+        {"role": "assistant", "content": "你好！我是你的智能助手 🤖\n\n我可以帮你：\n- 📚 查询产品手册里的内容\n- 💻 写代码、解释代码、前后端设计建议\n- 🌤️ 查询任意城市的天气\n- ⏰ 查现在几点了\n- 🧮 算数学题\n- 🎨 根据描述生成图片\n- 🔍 搜索网页获取最新信息\n- 💬 陪你聊天，回答各种问题\n\n有什么可以帮你的？"}
     ]
 
 # ===== 显示历史消息 =====
